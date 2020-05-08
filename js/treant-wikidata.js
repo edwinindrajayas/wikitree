@@ -3,38 +3,38 @@
 
 moment.locale('de');// , { longDateFormat: {'L': "DD.MM.YYYY" } });
 var relations = [
-    { prop : 'P22' , name : 'father' , to_q : false , edge_color : '#3923D6' } ,
-    { prop : 'P25' , name : 'mother' , to_q : false , edge_color : '#FF4848' } ,
+    { prop: 'P22', name: 'father', to_q: false, edge_color: '#3923D6' },
+    { prop: 'P25', name: 'mother', to_q: false, edge_color: '#FF4848' },
     // { prop : 'P40' , name : 'child' , to_q : false , edge_color : '#888888' }
-] ;
+];
 
-var supportedTypes  = {
+var supportedTypes = {
     'ancestors': relations,
-    'descendants' : [{ prop : 'P40' , name : 'child' , to_q : false , edge_color : '#888888' }],
-    'owner'    : [
-        { prop : 'P127' , name : 'owner' ,      to_q : false , edge_color : '#3923D6' } ,
-        { prop : 'P749' , name : 'parentOrg' ,  to_q : false , edge_color : '#FF4848' } ,
+    'descendants': [{ prop: 'P40', name: 'child', to_q: false, edge_color: '#888888' }],
+    'owner': [
+        { prop: 'P127', name: 'owner', to_q: false, edge_color: '#3923D6' },
+        { prop: 'P749', name: 'parentOrg', to_q: false, edge_color: '#FF4848' },
     ],
-    'owns'    : [
-        { prop : 'P1830' , name : 'owns' ,      to_q : false , edge_color : '#3923D6' } ,
-        { prop : 'P355' , name : 'subsidiary' ,  to_q : false , edge_color : '#FF4848' } ,
+    'owns': [
+        { prop: 'P1830', name: 'owns', to_q: false, edge_color: '#3923D6' },
+        { prop: 'P355', name: 'subsidiary', to_q: false, edge_color: '#FF4848' },
     ],
-    'subclasses'    : [
+    'subclasses': [
         // { prop : 'P1830' , name : 'owns' ,      to_q : false , edge_color : '#3923D6' } ,
-        { prop : 'P279' , name : 'subclass' ,  to_q : false , edge_color : '#FF4848' } ,
+        { prop: 'P279', name: 'subclass', to_q: false, edge_color: '#FF4848' },
     ]
 };
 function wikidataApi(para, callback) {
     $.getJSON(
         "https://www.wikidata.org/w/api.php?callback=?",
         {
-            action : 'wbgetentities' ,
-            ids :  para.ids ,
-            props : para.props || 'labels|descriptions|claims' ,
-            languages : para.lang || 'en',
-            languagefallback : '1',
-            format : 'json'
-        },callback
+            action: 'wbgetentities',
+            ids: para.ids,
+            props: para.props || 'labels|descriptions|claims',
+            languages: para.lang || 'en',
+            languagefallback: '1',
+            format: 'json'
+        }, callback
     );
 }
 function getLevel(item_id, child_id, lang, level, callback, rows) {
@@ -44,11 +44,11 @@ function getLevel(item_id, child_id, lang, level, callback, rows) {
         return;
     }
     wikidataApi({
-        ids :  item_id ,
-        props : 'labels|descriptions|claims|sitelinks/urls' ,
-        lang : lang + (secondLang ? "|"+secondLang : ""),
-        languagefallback : '1',
-    },function (data) {
+        ids: item_id,
+        props: 'labels|descriptions|claims|sitelinks/urls',
+        lang: lang + (secondLang ? "|" + secondLang : ""),
+        languagefallback: '1',
+    }, function (data) {
         processLevel(data, item_id, child_id, lang, level, callback, rows);
     });
 }
@@ -68,13 +68,13 @@ function getValueQid(claim) {
 }
 function getValueQidAndAddLabel(claim) {
     value = getValueQid(claim);
-    if(value ) {//&& labelIds.indexOf(value) == -1
+    if (value) {//&& labelIds.indexOf(value) == -1
         labelIds.push(value);
     }
     return value;
 }
 function getYearOfQualifier(q) {
-    return q.datavalue.value.time.substr(1,4);
+    return q.datavalue.value.time.substr(1, 4);
 }
 function getValueQidOfClaim(claim) {
     var value = (claim && claim.mainsnak.datavalue && claim.mainsnak.datavalue.value) || null;
@@ -82,10 +82,10 @@ function getValueQidOfClaim(claim) {
     return numericId ? 'Q' + numericId : null;
 }
 
-function getQualifiers(claim,q) {
+function getQualifiers(claim, q) {
     var qualifiers = (claim && claim.qualifiers) || null;
-    if(q){
-        if(!qualifiers){
+    if (q) {
+        if (!qualifiers) {
             return [];
         }
         return (qualifiers[q]) || [];
@@ -93,20 +93,20 @@ function getQualifiers(claim,q) {
     return qualifiers;
 }
 function hasEndQualifier(claim) {
-    return getQualifiers(claim,"P582").length > 0;
+    return getQualifiers(claim, "P582").length > 0;
 }
 var treeType, maxLevel, stackChildren, secondLang, showBirthName, chartOptions = [];
-var labelIds= [];
+var labelIds = [];
 
-function parseDate(unformattedDate){
-    var bce = (unformattedDate.substr(0,1) == "-" ? " BCE" :"");
+function parseDate(unformattedDate) {
+    var bce = (unformattedDate.substr(0, 1) == "-" ? " BCE" : "");
     dateObject = moment(unformattedDate.substr('+'.length));
-    var output ="";
+    var output = "";
     if (dateObject.isValid()) {
         output += dateObject.format('L');
     } else {
         output += unformattedDate.substr('+'.length, 4);
-        dateObject = moment(unformattedDate.substr('+'.length).replace("-00-00","-01-01"));
+        dateObject = moment(unformattedDate.substr('+'.length).replace("-00-00", "-01-01"));
     }
     output += bce;
     return {
@@ -129,71 +129,94 @@ function getPeopleData(claims) {
     // // number of spouses P26
     var number_of_spouses = (claims['P26'] && claims['P26'].length) || 0;
 
+    // // number of occupations P106
+    var number_of_occupations = (claims['P106'] && claims['P106'].length) || 0;
+    // burial place P119
+    var burial_place = getValueQidAndAddLabel(claims['P119']);
 
     html = "";
 
-    if(chartOptions.birthname && claims.P1477){
-        html +="(born as "+ getValueData(claims.P1477,"text")+")<br />";
+    if (chartOptions.birthname && claims.P1477) {
+        html += "(born as " + getValueData(claims.P1477, "text") + ")<br />";
     }
 
 
-    if(birth_value || birth_place) {
-        html +="*";
-        if(birth_value) {
+    if (birth_value || birth_place) {
+        html += "*";
+        if (birth_value) {
             var birth = parseDate(birth_value);
             if (treeType === "descendants" && birth_value) {
                 sortValue = birth.dateObject;
             }
             html += birth.output;
         }
-        html += (birth_place ? " {"+birth_place+"}": "") + '<br />';
+        html += (birth_place ? " {" + birth_place + "}" : "") + '<br />';
     }
-    if(death_value || death_place) {
-        html +="†";
-        html += (death_value ? parseDate(death_value).output + " ": "") ;
-        html += (death_place ? "{"+death_place+"}": "") ;
+    if (death_value || death_place) {
+        html += "†";
+        html += (death_value ? parseDate(death_value).output + " " : "");
+        html += (death_place ? "{" + death_place + "}" : "");
         html += '<br />'
     }
-
-    if(chartOptions.spouses && number_of_spouses > 0){
-        // html +="Spouse: "+number_of_spouses+ " <br>" + getSpousesNames(claims['P26']);
-        html +="<b>⚭</b> ";
-        var i=0;
-        claims.P26.forEach(function (claim) {
-            if(i>0){
-                html += ", ";
-            }i++;
+    //according to https://www.wikidata.org/wiki/Q80997055 , the burial date is imported or interpreted as death date 
+    if (burial_place) {
+        html += "⎧ᴿᴵᴾ⎫";
+        html += (death_value ? parseDate(death_value).output + " " : "");
+        html += "{" + burial_place + "} <br />";
+    }
+    if (chartOptions.occupations && number_of_occupations > 0) {
+        html += '<div class="container">'
+        html += "💼";
+        claims.P106.forEach(function (claim) {
             var qid = getValueQidAndAddLabel([claim]);
-            if(qid) {//catch unknown value /=> null error
+            if (qid) {//catch unknown value /=> null error
+                html += "{" + qid + "} <br />";
+            }
+        });
+        html += '</div>';
+    }
+
+    if (chartOptions.spouses && number_of_spouses > 0) {
+        // html +="Spouse: "+number_of_spouses+ " <br>" + getSpousesNames(claims['P26']);
+        html += "<b>⚭</b> ";
+        var i = 0;
+        claims.P26.forEach(function (claim) {
+            if (i > 0) {
+                html += ", ";
+            } i++;
+            var qid = getValueQidAndAddLabel([claim]);
+            if (qid) {//catch unknown value /=> null error
                 html += "{" + qid + "}";
             }
         });
-        html +=  "<br>";
+        html += "<br>";
 
 
     }
-    if(chartOptions.education && claims['P69']){
+    if (chartOptions.education && claims['P69']) {
         claims['P69'].forEach(function (claim) {
             html += "Edu: {" + getValueQidAndAddLabel([claim]) + "} ";
-            var start = getQualifiers(claim,"P580")[0] || false;
-            var end = getQualifiers(claim,"P582")[0] || false;
+            var start = getQualifiers(claim, "P580")[0] || false;
+            var end = getQualifiers(claim, "P582")[0] || false;
             // if (start || end){
             //     console.log(start);
             //     html += "("+ (start ? getYearOfQualifier(start) : "") + "-"+(end ? getYearOfQualifier(end) : "")+")";
             // }
-            html +=   "<br>";
+            html += "<br>";
         });
         // getValueQidOfClaim
     }
     var socialMedia = {
-    'P6634' : ['linkedin','https://www.linkedin.com/in/$1/'],
-    'P2003' : ['instagram',' https://www.instagram.com/$1/'],
-    'P2002' : ['twitter','  https://twitter.com/$1'],
-    'P2013' : ['facebook',' https://www.facebook.com/$1/'],
-    // 'P345' : ['imdb',' https://www.imdb.com/name/$1/']
+        'P6634': ['linkedin', 'https://www.linkedin.com/in/$1/'],
+        'P2003': ['instagram', ' https://www.instagram.com/$1/'],
+        'P2002': ['twitter', '  https://twitter.com/$1'],
+        'P2013': ['facebook', ' https://www.facebook.com/$1/'],
+        //add tiktok to social media links
+        'P7085': ['tiktok', ' https://www.tiktok.com/@$1'],
+        // 'P345' : ['imdb',' https://www.imdb.com/name/$1/']
 
     };
-    if(chartOptions.socialmedia) {
+    if (chartOptions.socialmedia) {
         for (s in socialMedia) {
             if (claims[s]) {
                 // html += '<a target="_blank" href="'+ socialMedia[s][1].replace("$1",getValue(claims[s])) +'" class="fa fa-'+socialMedia[s][0]+'" style="margin-right: 5px"></a>';
@@ -214,35 +237,35 @@ var nodeImages = [];
 function processLevel(data, item_id, child_id, lang, level, levelCb, rows) {
     // console.log("processLevel", level);
     // add a different class for fallback language
-    $( "#progressbar" ).progressbar({value: ($( "#progressbar" ).progressbar( "option", "value" ))+5 });
+    $("#progressbar").progressbar({ value: ($("#progressbar").progressbar("option", "value")) + 5 });
 
     var label = (data.entities[item_id].labels[lang] ? data.entities[item_id].labels[lang].value : "undefined");
-    if(label == "undefined"){
+    if (label == "undefined") {
         label = (data.entities[item_id].labels.en ? data.entities[item_id].labels.en.value : "undefined");
     }
-    if(secondLang){
-       var label2 = (data.entities[item_id].labels[secondLang] ? data.entities[item_id].labels[secondLang].value : null);
+    if (secondLang) {
+        var label2 = (data.entities[item_id].labels[secondLang] ? data.entities[item_id].labels[secondLang].value : null);
     }
     // for (label_lang in data.entities[item_id].labels) {
     //     var label =  data.entities[item_id].labels[label_lang].value;
     //     break;
     // }
     for (descr_lang in data.entities[item_id].descriptions) {
-        var descr =  data.entities[item_id].descriptions[descr_lang].value;
+        var descr = data.entities[item_id].descriptions[descr_lang].value;
         break;
     }
     var claims = data.entities[item_id].claims;
 
     // console.log($("#searchbox").val());
-    if(!$( "#searchbox" ).val()){
-        document.title = "Wikitree: " + treeType +" of "+ label;
-        $( "#searchbox" ).val(label );
-        $( "#searchbox_id" ).val( item_id );
+    if (!$("#searchbox").val()) {
+        document.title = "Wikitree: " + treeType + " of " + label;
+        $("#searchbox").val(label);
+        $("#searchbox_id").val(item_id);
     }
 
 
     // console.log(treeType);
-    if(treeType == "ancestors") {
+    if (treeType == "ancestors") {
         // mother P25
         var mother_item_id = getValueQid(claims['P25']);
         // father P22
@@ -250,16 +273,16 @@ function processLevel(data, item_id, child_id, lang, level, levelCb, rows) {
         // image P18
     }
     var images = [];
-    if(getValue(claims['P18'])){//image
-        for(claim in claims['P18']) {
+    if (getValue(claims['P18'])) {//image
+        for (claim in claims['P18']) {
             images.push({
                 'url': 'https://commons.wikimedia.org/wiki/Special:FilePath/' + getValue([claims['P18'][claim]]) + '?width=100px',
             });
         }
     }
-    if(getValue(claims['P154'])){//logo propery
+    if (getValue(claims['P154'])) {//logo propery
         images.push({
-            'url': 'https://commons.wikimedia.org/wiki/Special:FilePath/'+  getValue(claims['P154']) +'?width=100px',
+            'url': 'https://commons.wikimedia.org/wiki/Special:FilePath/' + getValue(claims['P154']) + '?width=100px',
         });
     }
     // if(!image_page){
@@ -267,14 +290,14 @@ function processLevel(data, item_id, child_id, lang, level, levelCb, rows) {
     // }
 
     var itemIdNumber = item_id.substr(1);
-    if(getValue(claims['P2002'])){
+    if (getValue(claims['P2002'])) {
         images.push({
-            'url': 'https://avatars.io/twitter/'+getValue(claims['P2002']),    //https://avatars.io/twitter/jesslynewidjaja
+            'url': 'https://avatars.io/twitter/' + getValue(claims['P2002']),    //https://avatars.io/twitter/jesslynewidjaja
             'source': "Twitter",
         });
     }
-    if(imageURLS[itemIdNumber]) {
-        images.push({'url': imageURLS[itemIdNumber] });
+    if (imageURLS[itemIdNumber]) {
+        images.push({ 'url': imageURLS[itemIdNumber] });
     }
 
     // gender P21
@@ -286,14 +309,14 @@ function processLevel(data, item_id, child_id, lang, level, levelCb, rows) {
         var gender_id = getValueData(claims['P21'], 'numeric-id');
         var gender_html = '';
         if (gender_id === 6581097) {
-            sortValue=0;
+            sortValue = 0;
             gender_html = '<i class="fa fa-mars"></i>';
             className = 'node-male'
         } else if (gender_id === 6581072) {
-            sortValue=1;
+            sortValue = 1;
             gender_html = '<i class="fa fa-venus"></i>';
             className = 'node-female'
-        } else{
+        } else {
             className = 'node-thirdgender';
         }
     }
@@ -302,42 +325,42 @@ function processLevel(data, item_id, child_id, lang, level, levelCb, rows) {
 
 
     var asyncFunctions = [
-        function(callback) {
+        function (callback) {
             var html = '<p class="node-name">';
             html += '<a target="_blank" href="https://www.wikidata.org/wiki/' + item_id + '">' + label + '</a>';
-            if(label2 && label != label2){//add second language icon
-                html += '<br />'+label2;
+            if (label2 && label != label2) {//add second language icon
+                html += '<br />' + label2;
             }
-                //'<a href="' + location.href.replace(location.search, '') + '?q=' + item_id + '">' + label + '</a>';
-            html += '</p><p class="node-title">' ;
+            //'<a href="' + location.href.replace(location.search, '') + '?q=' + item_id + '">' + label + '</a>';
+            html += '</p><p class="node-title">';
             var peopleData = getPeopleData(claims);
             html += peopleData.html;
-            if(chartOptions.socialmedia && data.entities[item_id].sitelinks && data.entities[item_id].sitelinks[lang+"wiki"])
-            html += '<a title="Read on Wikipedia" target="_blank" href="'+ data.entities[item_id].sitelinks[lang+"wiki"].url +'" style="margin-right: 5px"><img src="storage/icons/wikipedia.png" style="height: 16px;"/></a>';
+            if (chartOptions.socialmedia && data.entities[item_id].sitelinks && data.entities[item_id].sitelinks[lang + "wiki"])
+                html += '<a title="Read on Wikipedia" target="_blank" href="' + data.entities[item_id].sitelinks[lang + "wiki"].url + '" style="margin-right: 5px"><img src="storage/icons/wikipedia.png" style="height: 16px;"/></a>';
 
 
-            if(treeType === "descendants"){
+            if (treeType === "descendants") {
                 sortValue = peopleData.sortValue;
             }
             html += '</p>';
-            if(treeType === "owner") {
+            if (treeType === "owner") {
                 // html += '<p>Proportion</p>';
                 var industry = getValueQid(claims['P452']);
-                if(industry) {
+                if (industry) {
                     labelIds.push(industry);
                     html += '<p>Industry: {' + industry + '}</p>';
                 }
             }
-            if(images.length > 0){
-                nodeImages[item_id] = [0,images];
-                html = '<img class="node_image" id="image_'+ item_id +'" data-item="'+ item_id +'" alt="" src="'+  images[0].url +'">'  + html;
+            if (images.length > 0) {
+                nodeImages[item_id] = [0, images];
+                html = '<img class="node_image" id="image_' + item_id + '" data-item="' + item_id + '" alt="" src="' + images[0].url + '">' + html;
             }
             var newRow = {
                 id: item_id,
                 innerHTML: html,
                 parent_id: child_id,
                 stackChildren: stackChildren,
-                HTMLclass : className,
+                HTMLclass: className,
                 sortValue: sortValue,
             };
 
@@ -360,19 +383,19 @@ function processLevel(data, item_id, child_id, lang, level, levelCb, rows) {
             // }
             // // fetch wikitree pic if present
             // else
-                if (false && !image_page && getValue(claims['P2949'])) {
+            if (false && !image_page && getValue(claims['P2949'])) {
                 $.getJSON(
                     // "https://api.wikitree.com/api.php?callback=?",
                     "/treeapi",
                     {
-                        source : "wikitree",
+                        source: "wikitree",
                         action: "getProfile",
-                        key : getValue(claims['P2949'])
+                        key: getValue(claims['P2949'])
                     },
                     function (data) {
                         console.log("Fetched from Wikitree");
-                        if(data[0] && data[0].profile.PhotoData && data[0].profile.PhotoData.url){
-                            newRow.innerHTML = '<img title="FileSource:Wikitree.com" src="https://www.wikitree.com'+ data[0].profile.PhotoData.url +'">'  + html;
+                        if (data[0] && data[0].profile.PhotoData && data[0].profile.PhotoData.url) {
+                            newRow.innerHTML = '<img title="FileSource:Wikitree.com" src="https://www.wikitree.com' + data[0].profile.PhotoData.url + '">' + html;
                         }
                         rows.push(newRow);
                         callback(null, rows);
@@ -386,12 +409,12 @@ function processLevel(data, item_id, child_id, lang, level, levelCb, rows) {
     ];
     var duplicates = rows.some(o => o.id === item_id);
     // console.log(duplicates);
-    if(!duplicates) {
+    if (!duplicates) {
         // if( && treeType != "ancestors")
         var r = supportedTypes[treeType];
-        if(!r){
+        if (!r) {
             var children = claims[treeType] || [];
-        }else {
+        } else {
             // console.log(r);
             var children = claims[r[0].prop] || [];
             if (r[1]) {
@@ -401,39 +424,39 @@ function processLevel(data, item_id, child_id, lang, level, levelCb, rows) {
         // var owners = (claims['P127'] || []).concat(claims['P749']);
         // console.log("list");
         var children_distinct_Qids = [];
-        for(var child in children) {
+        for (var child in children) {
             if (!hasEndQualifier(children[child])) {
                 var child_item_id = getValueQidOfClaim(children[child]);
-                if(children_distinct_Qids.indexOf(child_item_id) == -1){
+                if (children_distinct_Qids.indexOf(child_item_id) == -1) {
                     children_distinct_Qids.push(child_item_id);
                 }
             }
         }
         // console.log(children_distinct_Qids);
-        for(child in children_distinct_Qids){
+        for (child in children_distinct_Qids) {
             // console.log(owner_distinct_ids[owner]);
-                asyncFunctions.push(function (child_item_id, callback) {
-                    // console.log(child_item_id);
-                    if (child_item_id) {
-                        getLevel(
-                            child_item_id,
-                            item_id,
-                            lang,
-                            level - 1,
-                            callback,
-                            rows
-                        );
-                    } else {
-                        callback();
-                    }
-                }.bind(null, children_distinct_Qids[child]));
+            asyncFunctions.push(function (child_item_id, callback) {
+                // console.log(child_item_id);
+                if (child_item_id) {
+                    getLevel(
+                        child_item_id,
+                        item_id,
+                        lang,
+                        level - 1,
+                        callback,
+                        rows
+                    );
+                } else {
+                    callback();
+                }
+            }.bind(null, children_distinct_Qids[child]));
         }
     }
 
 
 
-        async.parallel(asyncFunctions,
-        function(err, results) {
+    async.parallel(asyncFunctions,
+        function (err, results) {
             // console.log("level", level);
             // updateRows(rows);
             levelCb();
@@ -441,35 +464,35 @@ function processLevel(data, item_id, child_id, lang, level, levelCb, rows) {
     );
 }
 
-unflatten = function( array, parent, tree ){
+unflatten = function (array, parent, tree) {
     tree = typeof tree !== 'undefined' ? tree : [];
     parent = typeof parent !== 'undefined' ? parent : { id: 0 };
 
-    var children = _.filter( array, function(child){ return child.parent_id == parent.id; });
-    if(children.length && children[0].sortValue){
-        children = children.sort(function(a, b){
-            return a.sortValue-b.sortValue
+    var children = _.filter(array, function (child) { return child.parent_id == parent.id; });
+    if (children.length && children[0].sortValue) {
+        children = children.sort(function (a, b) {
+            return a.sortValue - b.sortValue
         })
     }
     // console.log(children);
-    if( !_.isEmpty( children )  ){
-        if( parent.id == 0 ){
+    if (!_.isEmpty(children)) {
+        if (parent.id == 0) {
             tree = children;
-        }else{
+        } else {
             parent['children'] = children
         }
-        _.each( children, function( child ){ unflatten( array, child ) } );
+        _.each(children, function (child) { unflatten(array, child) });
     }
 
     return tree;
 }
-function selectFormField(name,value) {
-    $("form#search select[name='"+name+"'] option").filter(function () { return $(this).html() == value; }).attr('selected','selected');
+function selectFormField(name, value) {
+    $("form#search select[name='" + name + "'] option").filter(function () { return $(this).html() == value; }).attr('selected', 'selected');
 }
 function getUrlVars() {
 
     var vars = {};
-    var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+    var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
         vars[decodeURIComponent(key)] = value;
     });
     return vars;
@@ -486,42 +509,43 @@ function drawChart() {
     var urlVars = getUrlVars();
 
 
-    chartOptions.birthname      = urlVars['options[birthname]'] || false;
-    chartOptions.socialmedia    = urlVars['options[socialmedia]'] || false;
-    chartOptions.education      = urlVars['options[education]'] || false;
-    chartOptions.spouses        = urlVars['options[spouses]'] || false;
+    chartOptions.birthname = urlVars['options[birthname]'] || false;
+    chartOptions.socialmedia = urlVars['options[socialmedia]'] || false;
+    chartOptions.education = urlVars['options[education]'] || false;
+    chartOptions.spouses = urlVars['options[spouses]'] || false;
+    chartOptions.occupations = urlVars['options[occupations]'] || false;
 
 
     $(".dropdown-settings a input").each(function (i) {
-        $(this).prop( 'checked', chartOptions[$(this).attr("data-value")] );
+        $(this).prop('checked', chartOptions[$(this).attr("data-value")]);
     });
 
     secondLang = getParameterByName('second_lang') || null;
     // selectFormField('lang',lang);
-    $( "#option_lang" ).val( getWikidataLanguages()[lang] );
-    $( "#option_lang_hidden" ).val( lang );
+    $("#option_lang").val(getWikidataLanguages()[lang]);
+    $("#option_lang_hidden").val(lang);
 
 
-    $( "#progressbar" ).progressbar({value: 10});
+    $("#progressbar").progressbar({ value: 10 });
 
 
-    for(var i = 2;i<11;i++){
+    for (var i = 2; i < 11; i++) {
         $("#option_level").append($("<option />").val(i).text(i));
     }
     maxLevel = getParameterByName('level') || '3';
-    selectFormField('level',maxLevel);
+    selectFormField('level', maxLevel);
 
     treeType = getParameterByName('type') || 'ancestors';
-    selectFormField('type',treeType);
+    selectFormField('type', treeType);
 
     stackChildren = getParameterByName('stack') || true
     chartOptions.stackChildren = stackChildren;
 
-    if(stackChildren == "false" || treeType == "ancestors" || treeType == "owner"){stackChildren=false;}
+    if (stackChildren == "false" || treeType == "ancestors" || treeType == "owner") { stackChildren = false; }
     console.log(chartOptions);//c
 
-    var orientation =getParameterByName('orientation') || 'NORTH';
-    selectFormField('orientation',orientation);
+    var orientation = getParameterByName('orientation') || 'NORTH';
+    selectFormField('orientation', orientation);
 
     // console.log("draw");
     // console.log(stackChildren);
@@ -531,24 +555,24 @@ function drawChart() {
         '',
         lang,
         maxLevel,
-        function() {
+        function () {
             // console.log("DONE");
             // console.log(rows);
-            $( "#progressbar" ).progressbar({value: 80});
+            $("#progressbar").progressbar({ value: 80 });
 
             const replaceLabels = (string, values) => string.replace(/{(.*?)}/g,
                 (match, offset) => (values && values[offset].labels && values[offset].labels[lang]) ? values[offset].labels[lang].value : values[offset].id);
             //fetch labels
             wikidataApi({
-                ids : ($.unique(labelIds)).join("|"),
+                ids: ($.unique(labelIds)).join("|"),
                 props: "labels",
                 lang: lang,
-            },function (data) {
+            }, function (data) {
                 labels = data.entities;
                 // console.log(labels);
-                for(row in rows){
+                for (row in rows) {
                     // console.log(rows[row].innerHTML);
-                    rows[row].innerHTML =replaceLabels(rows[row].innerHTML,labels);
+                    rows[row].innerHTML = replaceLabels(rows[row].innerHTML, labels);
                 }
 
                 var treeStructure = unflatten(rows);
@@ -577,16 +601,16 @@ function drawChart() {
                     },
                     nodeStructure: treeStructure
                 };
-                tree = new Treant( chart_config );
-                $( "#progressbar" ).progressbar({value: 100});
-                $( "#progressbar" ).hide(500);
-                $('img.node_image').on('click',  function(event){
+                tree = new Treant(chart_config);
+                $("#progressbar").progressbar({ value: 100 });
+                $("#progressbar").hide(500);
+                $('img.node_image').on('click', function (event) {
                     console.log("click");
-                    var images =nodeImages[$(this).data('item')];
-                    if(images.length > 1){
+                    var images = nodeImages[$(this).data('item')];
+                    if (images.length > 1) {
                         images[0]++;//counter up
-                        if(images[0] === images[1].length){
-                            images[0]=0;//reset counter;
+                        if (images[0] === images[1].length) {
+                            images[0] = 0;//reset counter;
                         }
                         $(this).attr('src', images[1][images[0]].url);
                     }
@@ -602,7 +626,7 @@ function drawChart() {
             // tree.tree.addNode(nodes[6], { text: { name: "newNodeText" } });
         },
         rows
-   );
+    );
 }
 
 
@@ -613,7 +637,7 @@ function updateRows(rows) {
     data.addColumn('string', 'ToolTip');
     data.addRows(rows);
     var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
-    chart.draw(data, {allowHtml:true});
+    chart.draw(data, { allowHtml: true });
 }
 
 
